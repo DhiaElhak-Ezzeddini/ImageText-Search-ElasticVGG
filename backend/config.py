@@ -1,0 +1,6 @@
+index_name = "image_text_search_index"
+index_text = "image_text_search_index_v1"
+elastic_url = "http://localhost:9200"
+elastic_user = "elastic"
+elastic_password = "elastic"
+data_path = "../data/images/"
