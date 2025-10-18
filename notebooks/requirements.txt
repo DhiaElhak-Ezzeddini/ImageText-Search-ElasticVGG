@@ -1,0 +1,6 @@
+opencv-contrib-python
+numpy
+sklearn
+imutils
+matplotlib
+scikit-image
