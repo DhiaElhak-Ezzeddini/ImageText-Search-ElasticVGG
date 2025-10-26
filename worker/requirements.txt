@@ -1,0 +1,10 @@
+numpy
+opencv-python-headless
+tensorflow-cpu==2.12.0
+scikit-image
+scikit-learn
+elasticsearch>=8.0.0,<9.0.0
+joblib
+requests
+tqdm
+Pillow
