@@ -19,3 +19,4 @@ logs/
 *.ipynb_checkpoints
 *.sqlite3
 *.db
+Data/
