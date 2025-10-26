@@ -33,7 +33,7 @@ parser.add_argument("--es-host", type=str, default=os.getenv("ES_HOST", "http://
                     help="Elasticsearch host URL")
 parser.add_argument("--batch", type=int, default=int(os.getenv("BATCH", "128")),
                     help="Bulk batch size")
-parser.add_argument("--op", choices=["index", "create"], default="create",
+parser.add_argument("--op", choices=["index", "create"], default="index",
                     help="helpers.bulk op type: 'create' to skip existing docs, 'index' to overwrite")
 parser.add_argument("--ipca-hog", type=str, default=os.getenv("IPCA_HOG", ""),
                     help="Path to IncrementalPCA joblib for HOG (optional)")
@@ -54,7 +54,7 @@ BATCH = args.batch
 OP = args.op
 IPCA_HOG_PATH = args.ipca_hog or None
 EXT = args.ext.lower()
-
+TAGS_ROOT = Path(os.getenv("TAGS_ROOT", "/tags"))
 # ---------- Init ----------
 es = Elasticsearch(ES_HOST)
 
@@ -141,6 +141,14 @@ def index_all():
                 h = hog.extract(str(img_path))
                 l = lbp.extract(str(img_path))
 
+                tags_list = []
+                tag_file = TAGS_ROOT / d.name / f"{img_path.stem}.txt"
+                if tag_file.exists():
+                    with open(tag_file, "r", encoding="utf-8") as f:
+                        # assuming one tag per line
+                        tags_list = [line.strip() for line in f if line.strip()]
+                
+
                 if ipca_hog is not None:
                     try:
                         h = ipca_hog.transform(h.reshape(1, -1)).reshape(-1)
@@ -169,6 +177,7 @@ def index_all():
                         "vgg_vector": v_list,
                         "hog_vector": h_list,
                         "lbp_vector": l_list,
+                        "tags": tags_list
                     }
                 }
                 actions.append(action)
