@@ -30,9 +30,11 @@ services:
       - IPCA_HOG_OUTPUT=/models/ipca_hog.joblib
       - PYTHONUNBUFFERED=1
       - DATA_ROOT=/data
+      - TAGS_ROOT=/tags
     volumes:
       - ./shared:/app/shared:ro
       - ./Data/images:/data:ro
+      - ./Data/tags:/tags:ro
       - ./models:/models
       - ./logs/trainer:/var/log/trainer
     depends_on:
@@ -57,11 +59,13 @@ services:
       - IPCA_HOG=/models/ipca_hog.joblib
       - BATCH=256
       - DATA_ROOT=/data
+      - TAGS_ROOT=/tags
       - MODELS_DIR=/models
       - PYTHONUNBUFFERED=1
     volumes:
       - ./shared:/app/shared:ro
       - ./Data/images:/data:ro
+      - ./Data/tags:/tags:ro
       - ./models:/models
       - ./logs/indexer:/var/log/indexer
     depends_on:
