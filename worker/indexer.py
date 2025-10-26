@@ -52,6 +52,7 @@ INDEX_NAME = args.index
 ES_HOST = args.es_host
 BATCH = args.batch
 OP = args.op
+print(OP)
 IPCA_HOG_PATH = args.ipca_hog or None
 EXT = args.ext.lower()
 TAGS_ROOT = Path(os.getenv("TAGS_ROOT", "/tags"))
