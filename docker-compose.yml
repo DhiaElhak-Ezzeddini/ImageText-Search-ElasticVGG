@@ -19,6 +19,15 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.6.0
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
 
   trainer:
     build:
@@ -52,7 +61,7 @@ services:
       context: .
       dockerfile: worker/Dockerfile
     # use the directory-walking indexer (no CSV). Use --op create to safely resume.
-    command: ["indexer.py"]
+    command: ["indexer.py","--start-dir", "7"]
     environment:
       - ES_HOST=http://elasticsearch:9200
       - ES_INDEX=images
