@@ -13,6 +13,7 @@ COPY shared /app/shared
 COPY backend /app/backend
 
 ENV PYTHONPATH=/app
-WORKDIR /app/backend
+WORKDIR /app
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Correct module path for uvicorn
+CMD ["uvicorn", "backend.app:app", "--host", "0.0.0.0", "--port", "8000"]
