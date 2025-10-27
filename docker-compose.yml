@@ -61,7 +61,7 @@ services:
       context: .
       dockerfile: worker/Dockerfile
     # use the directory-walking indexer (no CSV). Use --op create to safely resume.
-    command: ["indexer.py","--start-dir", "18"]
+    command: ["indexer.py","--start-dir", "22"]
     environment:
       - ES_HOST=http://elasticsearch:9200
       - ES_INDEX=images
