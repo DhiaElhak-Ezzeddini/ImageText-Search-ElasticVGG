@@ -61,7 +61,7 @@ services:
       context: .
       dockerfile: worker/Dockerfile
     # use the directory-walking indexer (no CSV). Use --op create to safely resume.
-    command: ["indexer.py","--start-dir", "7"]
+    command: ["indexer.py","--start-dir", "18"]
     environment:
       - ES_HOST=http://elasticsearch:9200
       - ES_INDEX=images
@@ -92,10 +92,15 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     environment:
+      - DATA_ROOT=/data
+      - TAGS_ROOT=/tags
       - ES_HOST=http://elasticsearch:9200
       - ES_INDEX=images
       - PYTHONUNBUFFERED=1
+      - IPCA_HOG=/models/ipca_hog.joblib
     volumes:
+      - ./Data/images:/data:ro
+      - ./Data/tags:/tags:ro
       - ./shared:/app/shared:ro
       - ./models:/models:ro
       - ./logs/backend:/var/log/backend
@@ -110,6 +115,7 @@ services:
         limits:
           memory: 4G
           cpus: "1.0"
+
 
 volumes:
   esdata:
