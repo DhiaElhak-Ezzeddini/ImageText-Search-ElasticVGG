@@ -51,8 +51,6 @@ async def search_mixed(
     size: int = 50
 ):
     """Hybrid image + text search (image-priority)"""
-
-    # 1️⃣ Read image
     contents = await file.read()
     nparr = np.frombuffer(contents, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -66,17 +64,7 @@ async def search_mixed(
     # Apply PCA if available
     if ipca_hog is not None:
         hog_q = ipca_hog.transform(hog_q.reshape(1, -1)).reshape(-1).astype(np.float32)
-    print('###################')
-    print('###################')
-    print(vgg_q.shape)
-    print(hog_q.shape)
-    print(lbp_q.shape)
-    print('###################')
-    print('###################')
-    print(vgg_q.dtype, hog_q.dtype, lbp_q.dtype)
 
-
-    # 3️⃣ Build query
     es_query = {
         "size": size,
         "query": {
@@ -100,13 +88,8 @@ async def search_mixed(
         },
         "_source": ["url", "tags"]
     }
-    print("vgg_q.shape:", vgg_q.shape)
-    print("hog_q.shape:", hog_q.shape)
-    print("lbp_q.shape:", lbp_q.shape)
-    print("vgg_vector in ES mapping:", es.indices.get_mapping(index=ES_INDEX)['images']['mappings'])
 
 
-    # 4️⃣ Run query
     res = es.search(index=ES_INDEX, body=es_query)
     hits = res.get("hits", {}).get("hits", [])
 
