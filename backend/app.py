@@ -214,321 +214,306 @@ async def home():
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hybrid Image Search</title>
-    <!-- Load Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom styles for the app */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        /* Custom Drop Zone Highlight */
-        #drop-zone.dragging {
-            border-color: #2563eb; /* blue-600 */
-            background-color: #dbeafe; /* blue-100 */
-        }
-        
-        /* Visually hide the file input */
-        #file-input {
-            width: 0.1px;
-            height: 0.1px;
-            opacity: 0;
-            overflow: hidden;
-            position: absolute;
-            z-index: -1;
-        }
-
-        /* Loading Spinner */
-        .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #f3f3f3; /* light grey */
-            border-top: 4px solid #2563eb; /* blue-600 */
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hybrid Image Search</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    #drop-zone.dragging { border-color: #60a5fa; background-color: rgba(99,102,241,0.06); }
+    .spinner { width:48px;height:48px;border:4px solid rgba(255,255,255,0.25);border-top:4px solid #60a5fa;border-radius:50%;animation:spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .glass { background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,0.06); }
+    .slider { -webkit-appearance:none; appearance:none; height:8px; border-radius:9999px; background:linear-gradient(90deg,#60a5fa,#3b82f6); outline:none; }
+    .slider::-webkit-slider-thumb { -webkit-appearance:none; width:16px;height:16px;border-radius:9999px;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.3); cursor:pointer; }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="min-h-screen flex flex-col items-center py-8 text-white">
+  <header class="text-center mb-6">
+    <h1 class="text-4xl font-extrabold">Hybrid Image Search Engine</h1>
+    <p class="text-blue-200 mt-1">Combine image and text signals — tune feature and fusion weights.</p>
+  </header>
 
-    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
-        <header class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-800">Hybrid Search Engine</h1>
-            <p class="text-lg text-gray-600 mt-2">Search by image, text, or both.</p>
-        </header>
-
-        <!-- Search Form -->
-        <form id="search-form" class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                <!-- Left Column: Inputs -->
-                <div class_ ="space-y-6">
-                    <div>
-                        <label for="mode-select" class="block text-sm font-medium text-gray-700 mb-1">Search Mode</label>
-                        <select name="mode" id="mode-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            <option value="hybrid" selected>Hybrid (Image + Text)</option>
-                            <option value="image">Image Only</option>
-                            <option value="text">Text Only</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="text-input" class="block text-sm font-medium text-gray-700 mb-1">Text Query</label>
-                        <input type="text" name="text" id="text-input" placeholder="e.g., cat, sunset, beach" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    </div>
-
-                    <div>
-                        <label for="size-input" class="block text-sm font-medium text-gray-700 mb-1">Number of Results</label>
-                        <input type="number" name="size" id="size-input" value="50" min="10" max="200" step="10" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-
-                <!-- Right Column: File Drop -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Query Image</label>
-                    <div id="drop-zone" class="relative w-full h-full min-h-[220px] border-2 border-dashed border-gray-400 rounded-lg flex flex-col justify-center items-center text-center p-6 cursor-pointer hover:border-blue-500 transition-all">
-                        <input type="file" name="file" id="file-input" accept="image/*">
-                        
-                        <!-- This image preview will show up when a file is selected -->
-                        <img id="preview-image" src="" alt="Image preview" class="hidden absolute top-0 left-0 w-full h-full object-cover rounded-lg">
-                        
-                        <!-- This text will hide when a file is selected -->
-                        <div id="drop-zone-text" class="flex flex-col items-center text-gray-600">
-                             <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-4-4V6a4 4 0 014-4h5a4 4 0 014 4v6a4 4 0 01-4 4H7z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 16v1a3 3 0 01-3 3H3a3 3 0 01-3-3V6a3 3 0 013-3h2"></path></svg>
-                            <p class="mt-2 font-semibold">Drag & drop an image</p>
-                            <p class="text-sm">or click to select</p>
-                            <span id="file-name" class="text-sm font-medium text-blue-600 mt-2"></span>
-                        </div>
-                    </div>
-                </div>
+  <main class="w-full max-w-5xl px-4">
+    <div class="glass rounded-2xl p-6 shadow-2xl">
+      <form id="search-form" class="space-y-6">
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- Left: controls -->
+          <div class="space-y-4">
+            <div>
+              <label for="mode-select" class="block text-sm font-medium">Search Mode</label>
+              <select id="mode-select" name="mode" class="mt-1 w-full p-3 rounded-lg text-gray-900">
+                <option value="hybrid" selected>Hybrid (Image + Text)</option>
+                <option value="image">Image Only</option>
+                <option value="text">Text Only</option>
+              </select>
             </div>
 
-            <!-- Submit Button -->
-            <div class="mt-8">
-                <button type="submit" id="search-button" class="w-full bg-blue-600 text-white font-bold p-4 rounded-lg text-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400">
-                    Search
-                </button>
-            </div>
-        </form>
-        
-        <!-- Results Section -->
-        <div class="mt-12">
-            <!-- Loading Spinner -->
-            <div id="loading" class="hidden flex justify-center items-center py-12">
-                <div class="spinner"></div>
-                <p class="ml-4 text-lg text-gray-600">Searching...</p>
+            <div>
+              <label for="text-input" class="block text-sm font-medium">Text Query</label>
+              <input id="text-input" name="text" type="text" placeholder="e.g. cat, sunset, beach" class="mt-1 w-full p-3 rounded-lg text-gray-900" />
             </div>
 
-            <!-- Error Message -->
-            <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 p-4 rounded-lg"></div>
+            <div>
+              <label for="size-input" class="block text-sm font-medium">Number of Results</label>
+              <input id="size-input" name="size" type="number" value="50" min="10" max="200" step="10" class="mt-1 w-full p-3 rounded-lg text-gray-900" />
+            </div>
 
-            <!-- Results Grid -->
-            <div id="results-header" class="hidden">
-                 <h2 class="text-2xl font-semibold text-gray-800">Results</h2>
-                 <p id="results-count" class="text-gray-600 mt-1"></p>
+            <!-- Fusion weights -->
+            <div class="mt-4 p-4 rounded-lg bg-white/5">
+              <h3 class="font-medium mb-2">Fusion weights</h3>
+              <div class="flex items-center justify-between text-sm mb-2">
+                <label>Image vs Text</label><span id="w-im-text-val">95% / 5%</span>
+              </div>
+              <input id="w-im" type="range" min="0" max="1" step="0.01" value="0.95" class="slider w-full" />
+              <p class="text-xs text-blue-200 mt-2">Higher = more importance to the image score when in hybrid mode.</p>
             </div>
-            <div id="results-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-6">
-                <!-- Results will be injected here -->
+
+          </div>
+
+          <!-- Right: drop zone + feature weights -->
+          <div class="space-y-4">
+            <label class="block text-sm font-medium">Query Image</label>
+            <div id="drop-zone" class="relative h-56 border-2 border-dashed rounded-xl flex items-center justify-center overflow-hidden cursor-pointer">
+              <input id="file-input" name="file" type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer"/>
+              <img id="preview-image" src="" alt="Preview" class="hidden absolute inset-0 w-full h-full object-cover" />
+              <div id="drop-zone-text" class="text-center px-4">
+                <svg class="mx-auto mb-2 w-10 h-10 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-4-4V6a4 4 0 014-4h5a4 4 0 014 4v6a4 4 0 01-4 4H7zM14 16v1a3 3 0 01-3 3H3a3 3 0 01-3-3V6a3 3 0 013-3h2"/></svg>
+                <p class="font-semibold">Drag & drop an image or click to select</p>
+                <p id="file-name" class="mt-1 text-sm text-blue-200"></p>
+              </div>
             </div>
+
+            <div class="mt-2 p-4 rounded-lg bg-white/5">
+              <h3 class="font-medium mb-2">Per-feature weights (VGG / HOG / LBP)</h3>
+              <div class="flex items-center justify-between text-sm mb-1">
+                <label>VGG</label><span id="w-vgg-val">0.80</span>
+              </div>
+              <input id="w-vgg" type="range" min="0" max="1" step="0.01" value="0.80" class="slider w-full mb-3" />
+
+              <div class="flex items-center justify-between text-sm mb-1">
+                <label>HOG</label><span id="w-hog-val">0.10</span>
+              </div>
+              <input id="w-hog" type="range" min="0" max="1" step="0.01" value="0.10" class="slider w-full mb-3" />
+
+              <div class="flex items-center justify-between text-sm mb-1">
+                <label>LBP</label><span id="w-lbp-val">0.10</span>
+              </div>
+              <input id="w-lbp" type="range" min="0" max="1" step="0.01" value="0.10" class="slider w-full" />
+            </div>
+
+          </div>
         </div>
+
+        <div>
+          <button id="search-button" type="submit" class="w-full py-3 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 font-semibold shadow-md">🔍 Search</button>
+        </div>
+      </form>
     </div>
 
-    <script>
-        const form = document.getElementById('search-form');
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
-        const fileNameSpan = document.getElementById('file-name');
-        const dropZoneText = document.getElementById('drop-zone-text');
-        const previewImage = document.getElementById('preview-image');
-        
-        const loading = document.getElementById('loading');
-        const errorMessage = document.getElementById('error-message');
-        const resultsHeader = document.getElementById('results-header');
-        const resultsCount = document.getElementById('results-count');
-        const resultsGrid = document.getElementById('results-grid');
-        const searchButton = document.getElementById('search-button');
+    <!-- Loading / Errors -->
+    <div id="loading" class="hidden mt-8 flex items-center justify-center">
+      <div class="spinner"></div><span class="ml-4">Searching...</span>
+    </div>
+    <div id="error-message" class="hidden mt-4 bg-red-100 text-red-700 p-3 rounded-lg"></div>
 
-        let uploadedFile = null;
+    <!-- Results -->
+    <section id="results-section" class="mt-8">
+      <div id="results-header" class="hidden text-white mb-4 text-center">
+        <h2 class="text-2xl font-semibold">Results</h2>
+        <p id="results-count" class="text-blue-200 mt-1"></p>
+      </div>
+      <div id="results-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+    </section>
+  </main>
 
-        // --- Drag and Drop Handlers ---
+<script>
+  // Elements
+  const form = document.getElementById('search-form');
+  const modeSelect = document.getElementById('mode-select');
+  const textInput = document.getElementById('text-input');
+  const sizeInput = document.getElementById('size-input');
+  const fileInput = document.getElementById('file-input');
+  const dropZone = document.getElementById('drop-zone');
+  const dropZoneText = document.getElementById('drop-zone-text');
+  const previewImage = document.getElementById('preview-image');
+  const fileNameSpan = document.getElementById('file-name');
+  const loading = document.getElementById('loading');
+  const errorMessage = document.getElementById('error-message');
+  const resultsHeader = document.getElementById('results-header');
+  const resultsCount = document.getElementById('results-count');
+  const resultsGrid = document.getElementById('results-grid');
+  const searchButton = document.getElementById('search-button');
 
-        // Prevent default drag behaviors
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
-        });
+  const wIm = document.getElementById('w-im');
+  const wImTextVal = document.getElementById('w-im-text-val');
+  const wVgg = document.getElementById('w-vgg');
+  const wHog = document.getElementById('w-hog');
+  const wLbp = document.getElementById('w-lbp');
+  const wVggVal = document.getElementById('w-vgg-val');
+  const wHogVal = document.getElementById('w-hog-val');
+  const wLbpVal = document.getElementById('w-lbp-val');
 
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
+  let uploadedFile = null;
 
-        // Highlight drop zone when item is dragged over
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragging'), false);
-        });
+  // Update slider labels
+  function refreshSliderLabels() {
+    const imPct = Math.round(parseFloat(wIm.value) * 100);
+    const txtPct = 100 - imPct;
+    wImTextVal.textContent = `${imPct}% / ${txtPct}%`;
+    wVggVal.textContent = parseFloat(wVgg.value).toFixed(2);
+    wHogVal.textContent = parseFloat(wHog.value).toFixed(2);
+    wLbpVal.textContent = parseFloat(wLbp.value).toFixed(2);
+  }
+  [wIm, wVgg, wHog, wLbp].forEach(el=>el.addEventListener('input', refreshSliderLabels));
+  refreshSliderLabels();
 
-        // Remove highlight when item leaves
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragging'), false);
-        });
+  // Drag/drop behaviors
+  ['dragenter','dragover','dragleave','drop'].forEach(ev=>{
+    dropZone.addEventListener(ev, e=>{ e.preventDefault(); e.stopPropagation(); });
+  });
+  ['dragenter','dragover'].forEach(ev=>dropZone.addEventListener(ev, ()=>dropZone.classList.add('dragging')));
+  ['dragleave','drop'].forEach(ev=>dropZone.addEventListener(ev, ()=>dropZone.classList.remove('dragging')));
+  dropZone.addEventListener('drop', e => {
+    const files = e.dataTransfer.files;
+    if (files.length > 0) handleFile(files[0]);
+  });
 
-        // Handle dropped files
-        dropZone.addEventListener('drop', handleDrop, false);
-        
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
-            }
-        }
+  // Click to open file selector
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => {
+    if (e.target.files.length > 0) handleFile(e.target.files[0]);
+  });
 
-        // --- Click to Upload Handlers ---
-        
-        // Trigger file input when drop zone is clicked
-        dropZone.addEventListener('click', () => {
-            fileInput.click();
-        });
+  function handleFile(file) {
+    if (file && file.type.startsWith('image/')) {
+      uploadedFile = file;
+      fileNameSpan.textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        previewImage.src = ev.target.result;
+        previewImage.classList.remove('hidden');
+        dropZoneText.classList.add('hidden');
+      };
+      reader.readAsDataURL(file);
+    } else {
+      uploadedFile = null;
+      fileNameSpan.textContent = 'Invalid file (choose an image)';
+      previewImage.classList.add('hidden');
+      dropZoneText.classList.remove('hidden');
+    }
+  }
 
-        // Handle file selected from input
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
-            }
-        });
+  // Mode logic: enable/disable inputs depending on mode
+  function updateModeState() {
+    const mode = modeSelect.value;
+    if (mode === 'text') {
+      // text-only -> disable file area visually
+      dropZone.classList.add('opacity-50');
+    } else {
+      dropZone.classList.remove('opacity-50');
+    }
+  }
+  modeSelect.addEventListener('change', updateModeState);
+  updateModeState();
 
-        // --- Common File Handling ---
-        
-        function handleFile(file) {
-            if (file && file.type.startsWith('image/')) {
-                uploadedFile = file;
-                fileNameSpan.textContent = file.name;
-                
-                // Show image preview
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    previewImage.src = e.target.result;
-                    previewImage.classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
+  // Submit handler: builds query params including weight sliders
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    // Validation: hybrid or image requires an image
+    const mode = modeSelect.value;
+    if ((mode === 'image' || mode === 'hybrid') && !uploadedFile) {
+      displayError('Image required for selected mode. Please upload or drop an image.');
+      return;
+    }
+    // Text-only requires text
+    if (mode === 'text' && !textInput.value.trim()) {
+      displayError("Text query can't be empty in 'text' mode.");
+      return;
+    }
 
-                dropZoneText.classList.add('hidden');
-            } else {
-                uploadedFile = null;
-                fileNameSpan.textContent = 'Invalid file. Please select an image.';
-                previewImage.classList.add('hidden');
-                dropZoneText.classList.remove('hidden');
-            }
-        }
+    // UI state
+    loading.classList.remove('hidden');
+    errorMessage.classList.add('hidden');
+    resultsGrid.innerHTML = '';
+    resultsHeader.classList.add('hidden');
+    searchButton.disabled = true;
+    searchButton.textContent = 'Searching...';
 
-        // --- Form Submission ---
-        
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            // Show loading, disable button, hide old results
-            loading.classList.remove('hidden');
-            errorMessage.classList.add('hidden');
-            resultsGrid.innerHTML = '';
-            resultsHeader.classList.add('hidden');
-            searchButton.disabled = true;
-            searchButton.textContent = 'Searching...';
-            
-            // Build FormData
-            const formData = new FormData();
-            formData.append('mode', document.getElementById('mode-select').value);
-            formData.append('text', document.getElementById('text-input').value);
-            
-            // Only append file if one is selected
-            if (uploadedFile) {
-                formData.append('file', uploadedFile);
-            }
+    // Build form data for file + text
+    const formData = new FormData();
+    formData.append('text', textInput.value || '');
+    if (uploadedFile) formData.append('file', uploadedFile);
 
-            const mode = formData.get('mode');
-            const size = document.getElementById('size-input').value;
-            
-            // Build query parameters for the URL
-            const queryParams = new URLSearchParams({
-                mode: mode,
-                size: size
-            });
+    // Build query params (FastAPI reads these as Query)
+    const params = new URLSearchParams({
+      mode,
+      size: sizeInput.value || '50',
+      w_vgg: wVgg.value,
+      w_hog: wHog.value,
+      w_lbp: wLbp.value,
+      w_img: wIm.value,
+      w_text: (1 - parseFloat(wIm.value)).toFixed(2)
+    });
 
-            try {
-                // We send 'mode' and 'size' in the URL query string
-                // We send 'text' and 'file' in the POST body (FormData)
-                const res = await fetch(`/search?${queryParams.toString()}`, {
-                    method: 'POST',
-                    body: formData 
-                    // No 'Content-Type' header; browser sets it for FormData
-                });
+    try {
+      const res = await fetch(`/search?${params.toString()}`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || res.statusText || 'Server error');
+      }
+      displayResults(data);
+    } catch (err) {
+      displayError(err.message);
+      console.error('Search failed', err);
+    } finally {
+      loading.classList.add('hidden');
+      searchButton.disabled = false;
+      searchButton.textContent = '🔍 Search';
+    }
+  });
 
-                if (!res.ok) {
-                    const errData = await res.json();
-                    throw new Error(errData.error || `Server error: ${res.statusText}`);
-                }
+  function displayError(msg) {
+    errorMessage.textContent = `Error: ${msg}`;
+    errorMessage.classList.remove('hidden');
+  }
 
-                const data = await res.json();
-
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-
-                displayResults(data);
-
-            } catch (err) {
-                displayError(err.message);
-                console.error('Search failed:', err);
-            } finally {
-                // Hide loading, re-enable button
-                loading.classList.add('hidden');
-                searchButton.disabled = false;
-                searchButton.textContent = 'Search';
-            }
-        });
-
-        function displayError(message) {
-            errorMessage.textContent = `Error: ${message}`;
-            errorMessage.classList.remove('hidden');
-            resultsHeader.classList.add('hidden');
-            resultsGrid.innerHTML = '';
-        }
-
-        function displayResults(data) {
-            resultsGrid.innerHTML = '';
-            errorMessage.classList.add('hidden');
-            
-            if (!data.results || data.results.length === 0) {
-                resultsHeader.classList.remove('hidden');
-                resultsCount.textContent = 'No results found.';
-                return;
-            }
-            
-            resultsHeader.classList.remove('hidden');
-            resultsCount.textContent = `Found ${data.results.length} results.`;
-            
-            const fragment = document.createDocumentFragment();
-            data.results.forEach(r => {
-                const img = document.createElement('img');
-                img.src = r.url;
-                img.title = r.tags.join(', ') + ` (Score: ${r.score.toFixed(3)})`;
-                img.alt = r.tags.join(', ') || 'Search result';
-                img.className = 'w-full h-40 object-cover rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer';
-                // Add a simple lightbox-like click
-                img.addEventListener('click', () => window.open(r.url, '_blank'));
-                fragment.appendChild(img);
-            });
-            resultsGrid.appendChild(fragment);
-        }
-    </script>
+  function displayResults(data) {
+    resultsGrid.innerHTML = '';
+    errorMessage.classList.add('hidden');
+    if (!data.results || data.results.length === 0) {
+      resultsHeader.classList.remove('hidden');
+      resultsCount.textContent = 'No results found.';
+      return;
+    }
+    resultsHeader.classList.remove('hidden');
+    resultsCount.textContent = `Found ${data.results.length} results.`;
+    data.results.forEach(r => {
+      const card = document.createElement('div');
+      card.className = 'group relative rounded-lg overflow-hidden shadow-md hover:scale-105 transition-transform duration-200 cursor-pointer';
+      const img = document.createElement('img');
+      img.src = r.url;
+      img.alt = r.tags ? r.tags.join(', ') : 'result';
+      img.className = 'w-full h-44 object-cover';
+      const overlay = document.createElement('div');
+      overlay.className = 'absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center';
+      const txt = document.createElement('p');
+      txt.className = 'text-white text-sm px-2 text-center';
+      txt.textContent = `${r.tags ? r.tags.join(', ') : 'No tags'} — Score: ${parseFloat(r.score).toFixed(3)}`;
+      overlay.appendChild(txt);
+      card.appendChild(img);
+      card.appendChild(overlay);
+      card.addEventListener('click', () => window.open(r.url, '_blank'));
+      resultsGrid.appendChild(card);
+    });
+  }
+</script>
 </body>
 </html>
-
 """
